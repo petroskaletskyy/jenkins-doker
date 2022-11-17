@@ -1,14 +1,16 @@
-FROM ubuntu
+FROM alpine:latest
 
- ENV TZ=Europe/Kiev
- 
- COPY src/index.php /var/www/html
+ENV TZ=Europe/Kiev
+ENV WORKDIR=/var/www/localhost/htdocs
 
- RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
- RUN    apt update
- RUN    apt install -y apache2 php
- RUN    rm -rf /var/www/html/index.html
-     
- EXPOSE 80
+RUN apk update && apk add --no-cache apache2 php && \
+    rm  /var/www/localhost/htdocs/index.html && \
+    rm -rf /var/cache/apk/* && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
- CMD ["apachectl", "-D", "FOREGROUND"]
+COPY src/index.php ${WORKDIR}
+COPY src/mysite.conf /etc/apache2/conf.d
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/sbin/httpd", "-D", "FOREGROUND"]
